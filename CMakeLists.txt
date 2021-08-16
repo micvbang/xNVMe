@@ -14,7 +14,7 @@ include(CheckIncludeFile)
 include(CheckFunctionExists)
 include(CheckIPOSupported)
 include(bundle_libs)
-if(NOT CMAKE_C_COMPILER_ID MATCHES "^(GNU|clang)$")
+if(NOT CMAKE_C_COMPILER_ID MATCHES "^(GNU|clang|Clang)$")
 	message( "" )
 	message( WARNING "You are using an untested toolchain" )
 	message( "  The GNU toolchain is preferred on Linux" )
@@ -27,6 +27,24 @@ if(NOT CMAKE_C_COMPILER_ID MATCHES "^(GNU|clang)$")
 	message( "  make CC=gcc CXX=g++" )
 	message( "" )
 	message( "" )
+endif()
+
+if(CMAKE_SYSTEM MATCHES "Linux")
+	set(LINUX 1)
+	set(FREEBSD 0)
+	set(WINDOWS 0)
+elseif(CMAKE_SYSTEM MATCHES "FreeBSD")
+	set(FREEBSD 1)
+	set(LINUX 0)
+	set(WINDOWS 0)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
+	set(WINDOWS 1)
+	set(FREEBSD 0)
+	set(LINUX 0)
+else()
+	set(FREEBSD 0)
+	set(LINUX 0)
+	set(WINDOWS 0)
 endif()
 
 function(enable_c_flag flag)
@@ -42,7 +60,9 @@ endfunction()
 enable_c_flag("-std=gnu11")
 enable_c_flag("-Wall")
 enable_c_flag("-Wextra")
-enable_c_flag("-Werror")
+if(!WINDOWS)
+	enable_c_flag("-Werror")
+endif()
 
 # Due to a bug in clang
 enable_c_flag("-Wno-missing-braces")
@@ -69,17 +89,6 @@ else()
 	set(HAS_IPO FALSE)
 endif()
 
-if(CMAKE_SYSTEM MATCHES "Linux")
-	set(FREEBSD 0)
-	set(LINUX 1)
-elseif(CMAKE_SYSTEM MATCHES "FreeBSD")
-	set(FREEBSD 1)
-	set(LINUX 0)
-else()
-	set(FREEBSD 0)
-	set(LINUX 0)
-endif()
-
 message( STATUS "CMAKE_INTERPROCEDURAL_OPTIMIZATION: '${CMAKE_INTERPROCEDURAL_OPTIMIZATION}'" )
 message( STATUS "IPO_SUPPORTED: '${IPO_SUPPORTED}'" )
 message( STATUS "HAS_IPO: '${HAS_IPO}'" )
@@ -91,7 +100,7 @@ message( STATUS "CMAKE_HOST_SYSTEM_NAME: '${CMAKE_HOST_SYSTEM_NAME}'" )
 message( STATUS "CMAKE_C_COMPILER_AR: '${CMAKE_C_COMPILER_AR}'" )
 message( STATUS "CMAKE_AR: '${CMAKE_AR}'" )
 
-message( STATUS "UNIX(${UNIX}), FREEBSD(${FREEBSD}), LINUX(${LINUX}), WIN32(${WIN32})" )
+message( STATUS "UNIX(${UNIX}), FREEBSD(${FREEBSD}), LINUX(${LINUX}), WINDOWS(${WINDOWS}), WIN32(${WIN32})" )
 
 #
 # Control whether '--whole-archive' are used when linking tools, examples, tests, etc. with xNVMe
@@ -150,9 +159,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 
 # Default 'clang' on FreeBSD does not look here, so we tell it to probably
 # another symptom of 'base-system-compiler-we-do-not-care'
-if (FREEBSD)
 link_directories("/usr/local/lib")
-endif()
 
 #
 # LIBS are the libraries which are "submoduled" by xNVMe and linked statically,
@@ -442,8 +449,46 @@ message( STATUS "BE:LINUX ENABLED(${XNVME_BE_LINUX_ENABLED})" )
 message( STATUS "BE:LINUX_LIBAIO ENABLED(${XNVME_BE_LINUX_LIBAIO_ENABLED})" )
 message( STATUS "BE:LINUX_LIBURING ENABLED(${XNVME_BE_LINUX_LIBURING_ENABLED})" )
 
+#
+# XNVME_BE_WINDOWS
+#
+set(XNVME_BE_WINDOWS_ENABLED ${WINDOWS} CACHE BOOL
+	"be_windows: WINDOWS backend")
+set(XNVME_BE_WINDOWS_FS_ENABLED ${WINDOWS} CACHE BOOL
+	"be_windows_fs: support for traditional file-system file-IO via the windows file system")
+set(WINDOWS_THIRD_PARTY_INCLUDE_PATH
+	"${PROJECT_SOURCE_DIR}/third-party/windows")
+set(GETOPT_HEADER_PATH
+	"${PROJECT_SOURCE_DIR}/third-party/windows/getopt/inc")
+set(GETOPT_SOURCE_PATH
+	"${PROJECT_SOURCE_DIR}/third-party/windows/getopt")
+
+if(XNVME_BE_WINDOWS_ENABLED)
+	add_definitions(-DWIN32)
+
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+
+	if(XNVME_BE_WINDOWS_ENABLED)
+		add_definitions(-DXNVME_BE_WINDOWS_ENABLED)
+	endif()
+
+	if(XNVME_BE_WINDOWS_FS_ENABLED)
+		add_definitions(-DXNVME_BE_WINDOWS_FS_ENABLED)
+	endif()
+
+	# Add sys/queue.h header
+	include_directories("${WINDOWS_THIRD_PARTY_INCLUDE_PATH}")
+
+	# Add getopt header
+	include_directories("${GETOPT_HEADER_PATH}")
+
+	# Add getopt.c
+	file(GLOB GETOPT_SOURCE_FILE  ${GETOPT_SOURCE_PATH}/src/*.c)
+	list(APPEND LIBS_SYSTEM SetupAPI)
+endif()
+message( STATUS "BE:WINDOWS ENABLED(${XNVME_BE_WINDOWS_ENABLED})" )
+
 if(WIN32)
-	message( WARNING "Do Windows Backend Specifics here" )
 	set(XNVME_BE_POSIX_ENABLED FALSE CACHE BOOL "be_posix: Posix backend")
 else()
 	set(XNVME_BE_POSIX_ENABLED TRUE CACHE BOOL "be_posix: Posix backend")
@@ -490,11 +535,15 @@ set(LIB_STATIC_FN "${CMAKE_STATIC_LIBRARY_PREFIX}${LIB_STATIC}${CMAKE_STATIC_LIB
 set(LIB_BUNDLE "${PROJECT_NAME}")
 
 # Static library
-add_library(${LIB_STATIC} STATIC ${PUBLIC_FILES} ${INTERNAL_FILES} ${SOURCE_FILES})
+add_library(${LIB_STATIC} STATIC ${PUBLIC_FILES} ${INTERNAL_FILES} ${SOURCE_FILES} ${GETOPT_SOURCE_FILE})
 set_target_properties(${LIB_STATIC} PROPERTIES
 	INTERPROCEDURAL_OPTIMIZATION HAS_IPO
 )
-target_compile_options(${LIB_STATIC} PUBLIC -fPIC)
+if(WINDOWS)
+	target_compile_options(${LIB_STATIC} PUBLIC -fno-common)
+else()
+	target_compile_options(${LIB_STATIC} PUBLIC -fPIC)
+endif()
 target_link_libraries(${LIB_STATIC} ${LIBS})
 target_link_libraries(${LIB_STATIC} ${LIBS_SYSTEM})
 install(TARGETS ${LIB_STATIC} DESTINATION lib COMPONENT dev)
@@ -511,11 +560,15 @@ if(NOT "${BUNDLE_LIBS}" STREQUAL "SUCCESS")
 endif()
 
 # Shared library
-add_library(${LIB_SHARED} SHARED ${PUBLIC_FILES} ${INTERNAL_FILES} ${SOURCE_FILES})
+add_library(${LIB_SHARED} SHARED ${PUBLIC_FILES} ${INTERNAL_FILES} ${SOURCE_FILES} ${GETOPT_SOURCE_FILE})
 set_target_properties(${LIB_SHARED} PROPERTIES
 	INTERPROCEDURAL_OPTIMIZATION HAS_IPO
 )
-target_compile_options(${LIB_SHARED} PUBLIC -fPIC)
+if(WINDOWS)
+	target_compile_options(${LIB_SHARED} PUBLIC -fno-common)
+else()
+	target_compile_options(${LIB_SHARED} PUBLIC -fPIC)
+endif()
 target_link_libraries(${LIB_SHARED} ${LIBS})
 target_link_libraries(${LIB_SHARED} ${LIBS_SYSTEM})
 install(TARGETS ${LIB_SHARED} DESTINATION lib COMPONENT dev)

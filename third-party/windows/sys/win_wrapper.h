@@ -4,8 +4,8 @@
 #ifndef __WIN_WRAPPER_H
 #define __WIN_WRAPPER_H
 #include <basetsd.h>
-#include <time.h>
 #include <limits.h>
+#include <time.h>
 
 #define CLOCK_MONOTONIC 0
 #define clock_gettime(val, ts) timespec_get(ts, TIME_UTC);

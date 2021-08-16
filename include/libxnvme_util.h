@@ -9,11 +9,15 @@
  */
 #ifndef __LIBXNVME_UTIL_H
 #define __LIBXNVME_UTIL_H
-#include <string.h>
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
-#include <assert.h>
+
+#if WIN32
+#include <sys/win_wrapper.h>
+#endif
 
 #define XNVME_UNIVERSAL_SECT_SH 9
 
@@ -32,151 +36,93 @@
  */
 #ifdef __GNUC__
 #define XNVME_UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
+#elif __clang__
+#define XNVME_UNUSED(x) UNUSED_ ## x __attribute__((__unused__))
 #else
 #define XNVME_UNUSED(x) UNUSED_ ## x
 #endif
 
-#define XNVME_I64_FMT \
-	"%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"\
-	"%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"\
-	"%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"\
-	"%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
+#define XNVME_I64_FMT                                                          \
+  "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"                                           \
+  "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"                                           \
+  "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"                                           \
+  "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
 
-#define XNVME_I64_TO_STR(val) \
-	(val & (1ULL << 63) ? '1' : '0'), \
-	(val & (1ULL << 62) ? '1' : '0'), \
-	(val & (1ULL << 61) ? '1' : '0'), \
-	(val & (1ULL << 60) ? '1' : '0'), \
-	(val & (1ULL << 59) ? '1' : '0'), \
-	(val & (1ULL << 58) ? '1' : '0'), \
-	(val & (1ULL << 57) ? '1' : '0'), \
-	(val & (1ULL << 56) ? '1' : '0'), \
-	(val & (1ULL << 55) ? '1' : '0'), \
-	(val & (1ULL << 54) ? '1' : '0'), \
-	(val & (1ULL << 53) ? '1' : '0'), \
-	(val & (1ULL << 52) ? '1' : '0'), \
-	(val & (1ULL << 51) ? '1' : '0'), \
-	(val & (1ULL << 50) ? '1' : '0'), \
-	(val & (1ULL << 49) ? '1' : '0'), \
-	(val & (1ULL << 48) ? '1' : '0'), \
-	(val & (1ULL << 47) ? '1' : '0'), \
-	(val & (1ULL << 46) ? '1' : '0'), \
-	(val & (1ULL << 45) ? '1' : '0'), \
-	(val & (1ULL << 44) ? '1' : '0'), \
-	(val & (1ULL << 43) ? '1' : '0'), \
-	(val & (1ULL << 42) ? '1' : '0'), \
-	(val & (1ULL << 41) ? '1' : '0'), \
-	(val & (1ULL << 40) ? '1' : '0'), \
-	(val & (1ULL << 39) ? '1' : '0'), \
-	(val & (1ULL << 38) ? '1' : '0'), \
-	(val & (1ULL << 37) ? '1' : '0'), \
-	(val & (1ULL << 36) ? '1' : '0'), \
-	(val & (1ULL << 35) ? '1' : '0'), \
-	(val & (1ULL << 34) ? '1' : '0'), \
-	(val & (1ULL << 33) ? '1' : '0'), \
-	(val & (1ULL << 32) ? '1' : '0'), \
-	(val & (1ULL << 31) ? '1' : '0'), \
-	(val & (1ULL << 30) ? '1' : '0'), \
-	(val & (1ULL << 29) ? '1' : '0'), \
-	(val & (1ULL << 28) ? '1' : '0'), \
-	(val & (1ULL << 27) ? '1' : '0'), \
-	(val & (1ULL << 26) ? '1' : '0'), \
-	(val & (1ULL << 25) ? '1' : '0'), \
-	(val & (1ULL << 24) ? '1' : '0'), \
-	(val & (1ULL << 23) ? '1' : '0'), \
-	(val & (1ULL << 22) ? '1' : '0'), \
-	(val & (1ULL << 21) ? '1' : '0'), \
-	(val & (1ULL << 20) ? '1' : '0'), \
-	(val & (1ULL << 19) ? '1' : '0'), \
-	(val & (1ULL << 18) ? '1' : '0'), \
-	(val & (1ULL << 17) ? '1' : '0'), \
-	(val & (1ULL << 16) ? '1' : '0'), \
-	(val & (1ULL << 15) ? '1' : '0'), \
-	(val & (1ULL << 14) ? '1' : '0'), \
-	(val & (1ULL << 13) ? '1' : '0'), \
-	(val & (1ULL << 12) ? '1' : '0'), \
-	(val & (1ULL << 11) ? '1' : '0'), \
-	(val & (1ULL << 10) ? '1' : '0'), \
-	(val & (1ULL << 9) ? '1' : '0'), \
-	(val & (1ULL << 8) ? '1' : '0'), \
-	(val & (1ULL << 7) ? '1' : '0'), \
-	(val & (1ULL << 6) ? '1' : '0'), \
-	(val & (1ULL << 5) ? '1' : '0'), \
-	(val & (1ULL << 4) ? '1' : '0'), \
-	(val & (1ULL << 3) ? '1' : '0'), \
-	(val & (1ULL << 2) ? '1' : '0'), \
-	(val & (1ULL << 1) ? '1' : '0'), \
-	(val & (1ULL << 0) ? '1' : '0')
+#define XNVME_I64_TO_STR(val)                                                  \
+  (val & (1ULL << 63) ? '1' : '0'), (val & (1ULL << 62) ? '1' : '0'),          \
+	  (val & (1ULL << 61) ? '1' : '0'), (val & (1ULL << 60) ? '1' : '0'),      \
+	  (val & (1ULL << 59) ? '1' : '0'), (val & (1ULL << 58) ? '1' : '0'),      \
+	  (val & (1ULL << 57) ? '1' : '0'), (val & (1ULL << 56) ? '1' : '0'),      \
+	  (val & (1ULL << 55) ? '1' : '0'), (val & (1ULL << 54) ? '1' : '0'),      \
+	  (val & (1ULL << 53) ? '1' : '0'), (val & (1ULL << 52) ? '1' : '0'),      \
+	  (val & (1ULL << 51) ? '1' : '0'), (val & (1ULL << 50) ? '1' : '0'),      \
+	  (val & (1ULL << 49) ? '1' : '0'), (val & (1ULL << 48) ? '1' : '0'),      \
+	  (val & (1ULL << 47) ? '1' : '0'), (val & (1ULL << 46) ? '1' : '0'),      \
+	  (val & (1ULL << 45) ? '1' : '0'), (val & (1ULL << 44) ? '1' : '0'),      \
+	  (val & (1ULL << 43) ? '1' : '0'), (val & (1ULL << 42) ? '1' : '0'),      \
+	  (val & (1ULL << 41) ? '1' : '0'), (val & (1ULL << 40) ? '1' : '0'),      \
+	  (val & (1ULL << 39) ? '1' : '0'), (val & (1ULL << 38) ? '1' : '0'),      \
+	  (val & (1ULL << 37) ? '1' : '0'), (val & (1ULL << 36) ? '1' : '0'),      \
+	  (val & (1ULL << 35) ? '1' : '0'), (val & (1ULL << 34) ? '1' : '0'),      \
+	  (val & (1ULL << 33) ? '1' : '0'), (val & (1ULL << 32) ? '1' : '0'),      \
+	  (val & (1ULL << 31) ? '1' : '0'), (val & (1ULL << 30) ? '1' : '0'),      \
+	  (val & (1ULL << 29) ? '1' : '0'), (val & (1ULL << 28) ? '1' : '0'),      \
+	  (val & (1ULL << 27) ? '1' : '0'), (val & (1ULL << 26) ? '1' : '0'),      \
+	  (val & (1ULL << 25) ? '1' : '0'), (val & (1ULL << 24) ? '1' : '0'),      \
+	  (val & (1ULL << 23) ? '1' : '0'), (val & (1ULL << 22) ? '1' : '0'),      \
+	  (val & (1ULL << 21) ? '1' : '0'), (val & (1ULL << 20) ? '1' : '0'),      \
+	  (val & (1ULL << 19) ? '1' : '0'), (val & (1ULL << 18) ? '1' : '0'),      \
+	  (val & (1ULL << 17) ? '1' : '0'), (val & (1ULL << 16) ? '1' : '0'),      \
+	  (val & (1ULL << 15) ? '1' : '0'), (val & (1ULL << 14) ? '1' : '0'),      \
+	  (val & (1ULL << 13) ? '1' : '0'), (val & (1ULL << 12) ? '1' : '0'),      \
+	  (val & (1ULL << 11) ? '1' : '0'), (val & (1ULL << 10) ? '1' : '0'),      \
+	  (val & (1ULL << 9) ? '1' : '0'), (val & (1ULL << 8) ? '1' : '0'),        \
+	  (val & (1ULL << 7) ? '1' : '0'), (val & (1ULL << 6) ? '1' : '0'),        \
+	  (val & (1ULL << 5) ? '1' : '0'), (val & (1ULL << 4) ? '1' : '0'),        \
+	  (val & (1ULL << 3) ? '1' : '0'), (val & (1ULL << 2) ? '1' : '0'),        \
+	  (val & (1ULL << 1) ? '1' : '0'), (val & (1ULL << 0) ? '1' : '0')
 
-#define XNVME_I32_FMT \
-	"%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c" \
-	"%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
+#define XNVME_I32_FMT                                                          \
+  "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"                                           \
+  "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
 
-#define XNVME_I32_TO_STR(val) \
-	(val & (1ULL << 31) ? '1' : '0'), \
-	(val & (1ULL << 30) ? '1' : '0'), \
-	(val & (1ULL << 29) ? '1' : '0'), \
-	(val & (1ULL << 28) ? '1' : '0'), \
-	(val & (1ULL << 27) ? '1' : '0'), \
-	(val & (1ULL << 26) ? '1' : '0'), \
-	(val & (1ULL << 25) ? '1' : '0'), \
-	(val & (1ULL << 24) ? '1' : '0'), \
-	(val & (1ULL << 23) ? '1' : '0'), \
-	(val & (1ULL << 22) ? '1' : '0'), \
-	(val & (1ULL << 21) ? '1' : '0'), \
-	(val & (1ULL << 20) ? '1' : '0'), \
-	(val & (1ULL << 19) ? '1' : '0'), \
-	(val & (1ULL << 18) ? '1' : '0'), \
-	(val & (1ULL << 17) ? '1' : '0'), \
-	(val & (1ULL << 16) ? '1' : '0'), \
-	(val & (1ULL << 15) ? '1' : '0'), \
-	(val & (1ULL << 14) ? '1' : '0'), \
-	(val & (1ULL << 13) ? '1' : '0'), \
-	(val & (1ULL << 12) ? '1' : '0'), \
-	(val & (1ULL << 11) ? '1' : '0'), \
-	(val & (1ULL << 10) ? '1' : '0'), \
-	(val & (1ULL << 9) ? '1' : '0'), \
-	(val & (1ULL << 8) ? '1' : '0'), \
-	(val & (1ULL << 7) ? '1' : '0'), \
-	(val & (1ULL << 6) ? '1' : '0'), \
-	(val & (1ULL << 5) ? '1' : '0'), \
-	(val & (1ULL << 4) ? '1' : '0'), \
-	(val & (1ULL << 3) ? '1' : '0'), \
-	(val & (1ULL << 2) ? '1' : '0'), \
-	(val & (1ULL << 1) ? '1' : '0'), \
-	(val & (1ULL << 0) ? '1' : '0')
+#define XNVME_I32_TO_STR(val)                                                  \
+  (val & (1ULL << 31) ? '1' : '0'), (val & (1ULL << 30) ? '1' : '0'),          \
+	  (val & (1ULL << 29) ? '1' : '0'), (val & (1ULL << 28) ? '1' : '0'),      \
+	  (val & (1ULL << 27) ? '1' : '0'), (val & (1ULL << 26) ? '1' : '0'),      \
+	  (val & (1ULL << 25) ? '1' : '0'), (val & (1ULL << 24) ? '1' : '0'),      \
+	  (val & (1ULL << 23) ? '1' : '0'), (val & (1ULL << 22) ? '1' : '0'),      \
+	  (val & (1ULL << 21) ? '1' : '0'), (val & (1ULL << 20) ? '1' : '0'),      \
+	  (val & (1ULL << 19) ? '1' : '0'), (val & (1ULL << 18) ? '1' : '0'),      \
+	  (val & (1ULL << 17) ? '1' : '0'), (val & (1ULL << 16) ? '1' : '0'),      \
+	  (val & (1ULL << 15) ? '1' : '0'), (val & (1ULL << 14) ? '1' : '0'),      \
+	  (val & (1ULL << 13) ? '1' : '0'), (val & (1ULL << 12) ? '1' : '0'),      \
+	  (val & (1ULL << 11) ? '1' : '0'), (val & (1ULL << 10) ? '1' : '0'),      \
+	  (val & (1ULL << 9) ? '1' : '0'), (val & (1ULL << 8) ? '1' : '0'),        \
+	  (val & (1ULL << 7) ? '1' : '0'), (val & (1ULL << 6) ? '1' : '0'),        \
+	  (val & (1ULL << 5) ? '1' : '0'), (val & (1ULL << 4) ? '1' : '0'),        \
+	  (val & (1ULL << 3) ? '1' : '0'), (val & (1ULL << 2) ? '1' : '0'),        \
+	  (val & (1ULL << 1) ? '1' : '0'), (val & (1ULL << 0) ? '1' : '0')
 
-#define XNVME_I16_FMT	"%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
+#define XNVME_I16_FMT "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c"
 
-#define XNVME_I16_TO_STR(val) \
-	(val & (1ULL << 15) ? '1' : '0'), \
-	(val & (1ULL << 14) ? '1' : '0'), \
-	(val & (1ULL << 13) ? '1' : '0'), \
-	(val & (1ULL << 12) ? '1' : '0'), \
-	(val & (1ULL << 11) ? '1' : '0'), \
-	(val & (1ULL << 10) ? '1' : '0'), \
-	(val & (1ULL << 9) ? '1' : '0'), \
-	(val & (1ULL << 8) ? '1' : '0'), \
-	(val & (1ULL << 7) ? '1' : '0'), \
-	(val & (1ULL << 6) ? '1' : '0'), \
-	(val & (1ULL << 5) ? '1' : '0'), \
-	(val & (1ULL << 4) ? '1' : '0'), \
-	(val & (1ULL << 3) ? '1' : '0'), \
-	(val & (1ULL << 2) ? '1' : '0'), \
-	(val & (1ULL << 1) ? '1' : '0'), \
-	(val & (1ULL << 0) ? '1' : '0')
+#define XNVME_I16_TO_STR(val)                                                  \
+  (val & (1ULL << 15) ? '1' : '0'), (val & (1ULL << 14) ? '1' : '0'),          \
+	  (val & (1ULL << 13) ? '1' : '0'), (val & (1ULL << 12) ? '1' : '0'),      \
+	  (val & (1ULL << 11) ? '1' : '0'), (val & (1ULL << 10) ? '1' : '0'),      \
+	  (val & (1ULL << 9) ? '1' : '0'), (val & (1ULL << 8) ? '1' : '0'),        \
+	  (val & (1ULL << 7) ? '1' : '0'), (val & (1ULL << 6) ? '1' : '0'),        \
+	  (val & (1ULL << 5) ? '1' : '0'), (val & (1ULL << 4) ? '1' : '0'),        \
+	  (val & (1ULL << 3) ? '1' : '0'), (val & (1ULL << 2) ? '1' : '0'),        \
+	  (val & (1ULL << 1) ? '1' : '0'), (val & (1ULL << 0) ? '1' : '0')
 
-#define XNVME_I8_FMT	"%c%c%c%c%c%c%c%c"
+#define XNVME_I8_FMT "%c%c%c%c%c%c%c%c"
 
-#define XNVME_I8_TO_STR(val) \
-	(val & (1ULL << 7) ? '1' : '0'), \
-	(val & (1ULL << 6) ? '1' : '0'), \
-	(val & (1ULL << 5) ? '1' : '0'), \
-	(val & (1ULL << 4) ? '1' : '0'), \
-	(val & (1ULL << 3) ? '1' : '0'), \
-	(val & (1ULL << 2) ? '1' : '0'), \
-	(val & (1ULL << 1) ? '1' : '0'), \
-	(val & (1ULL << 0) ? '1' : '0')
+#define XNVME_I8_TO_STR(val)                                                   \
+  (val & (1ULL << 7) ? '1' : '0'), (val & (1ULL << 6) ? '1' : '0'),            \
+	  (val & (1ULL << 5) ? '1' : '0'), (val & (1ULL << 4) ? '1' : '0'),        \
+	  (val & (1ULL << 3) ? '1' : '0'), (val & (1ULL << 2) ? '1' : '0'),        \
+	  (val & (1ULL << 1) ? '1' : '0'), (val & (1ULL << 0) ? '1' : '0')
 
 static inline uint64_t
 XNVME_ILOG2(uint64_t x)
@@ -191,12 +137,12 @@ XNVME_ILOG2(uint64_t x)
 }
 
 /**
-* Calculate the minimum of the given `x` and `y`
-*
-* @param x
-* @param y
-* @return The maximum of `x` and `y`
-*/
+ * Calculate the minimum of the given `x` and `y`
+ *
+ * @param x
+ * @param y
+ * @return The maximum of `x` and `y`
+ */
 static inline int
 XNVME_MIN(int x, int y)
 {
@@ -204,12 +150,12 @@ XNVME_MIN(int x, int y)
 }
 
 /**
-* Calculate the minimum of the given `x` and `y`
-*
-* @param x
-* @param y
-* @return The maximum of `x` and `y`
-*/
+ * Calculate the minimum of the given `x` and `y`
+ *
+ * @param x
+ * @param y
+ * @return The maximum of `x` and `y`
+ */
 static inline uint64_t
 XNVME_MIN_U64(uint64_t x, uint64_t y)
 {
@@ -217,12 +163,12 @@ XNVME_MIN_U64(uint64_t x, uint64_t y)
 }
 
 /**
-* Calculate the minimum of the given `x` and `y`
-*
-* @param x
-* @param y
-* @return The maximum of `x` and `y`
-*/
+ * Calculate the minimum of the given `x` and `y`
+ *
+ * @param x
+ * @param y
+ * @return The maximum of `x` and `y`
+ */
 static inline int64_t
 XNVME_MIN_S64(int64_t x, int64_t y)
 {
@@ -368,13 +314,14 @@ xnvme_timer_pr(struct xnvme_timer *t, const char *prefix)
  * @param nbytes
  */
 static inline void
-xnvme_timer_bw_pr(struct xnvme_timer *t, const char *prefix, size_t nbytes)
+xnvme_timer_bw_pr(struct xnvme_timer *t, const char *prefix,
+		  size_t nbytes)
 {
 	double secs = xnvme_timer_elapsed_secs(t);
 	double mb = nbytes / (double)1048576;
 
-	printf("%s: {elapsed: %.4f, mib: %.2f, mib_sec: %.2f}\n",
-	       prefix, secs, mb, mb / secs);
+	printf("%s: {elapsed: %.4f, mib: %.2f, mib_sec: %.2f}\n", prefix, secs, mb,
+	       mb / secs);
 }
 
 static inline int
@@ -389,10 +336,10 @@ xnvme_is_pow2(uint32_t val)
 
 #define __FILENAME__ strrchr("/" __FILE__, '/') + 1
 
-#define XNVME_DEBUG(...) \
-	fprintf(stderr, "# DBG:%s:%s-%d: " FIRST(__VA_ARGS__) "\n" , \
-		__FILENAME__, __func__, __LINE__ REST(__VA_ARGS__)); \
-	fflush(stderr);
+#define XNVME_DEBUG(...)                                                       \
+  fprintf(stderr, "# DBG:%s:%s-%d: " FIRST(__VA_ARGS__) "\n", __FILENAME__,    \
+		  __func__, __LINE__ REST(__VA_ARGS__));                               \
+  fflush(stderr);
 
 #define FIRST(...) FIRST_HELPER(__VA_ARGS__, throwaway)
 #define FIRST_HELPER(first, ...) first
@@ -402,9 +349,9 @@ xnvme_is_pow2(uint32_t val)
 #define REST_HELPER2(qty, ...) REST_HELPER_##qty(__VA_ARGS__)
 #define REST_HELPER_ONE(first)
 #define REST_HELPER_TWOORMORE(first, ...) , __VA_ARGS__
-#define NUM(...) \
-	SELECT_10TH(__VA_ARGS__, TWOORMORE, TWOORMORE, TWOORMORE, TWOORMORE,\
-		    TWOORMORE, TWOORMORE, TWOORMORE, TWOORMORE, ONE, throwaway)
+#define NUM(...)                                                               \
+  SELECT_10TH(__VA_ARGS__, TWOORMORE, TWOORMORE, TWOORMORE, TWOORMORE,         \
+			  TWOORMORE, TWOORMORE, TWOORMORE, TWOORMORE, ONE, throwaway)
 #define SELECT_10TH(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, ...) a10
 
 #else

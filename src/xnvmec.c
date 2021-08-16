@@ -8,10 +8,13 @@
 #include <limits.h>
 #include <time.h>
 #include <stdint.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <libxnvmec.h>
 #include <libxnvme_file.h>
+
+#ifdef WIN32
+#include <sys/win_wrapper.h>
+#endif
 
 const char *
 xnvmec_opt_type_str(enum xnvmec_opt_type otype)

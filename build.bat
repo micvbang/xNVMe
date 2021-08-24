@@ -20,9 +20,11 @@ for %%i in (%cfg% %*) do (
 	if "%%i"=="clean" set CLEAN=clean
 )
 
-set "PATH=%ALLUSERSPROFILE%\chocolatey\bin;!PATH!"
+set "PATH=%ALLUSERSPROFILE%\chocolatey\bin;!PATH!
 set "PATH=%SystemDrive%\tools\msys64;!PATH!"
+set "PATH=%ProgramFiles%\CMake\bin;!PATH!"
 set "PATH=%ProgramFiles%\LLVM\bin;!PATH!"
+
 
 set "cfg=%CC% %TYPE%"
 :: save config

@@ -17,10 +17,36 @@ if errorlevel 1 (
 
 set "PATH=%ProgramFiles%\LLVM\bin;%PATH%"
 where /q clang
-REM if errorlevel 1 if "%CLANG%"=="y" (
 if errorlevel 1 (
 	echo Installing Clang ...
 	choco install llvm -y -r
+	if errorlevel 1 goto :eof
+)
+
+set "PATH=%ProgramFiles%\CMake\bin;%PATH%"
+where /q cmake
+if errorlevel 1 (
+	echo Installing cmake ...
+	choco install cmake -y -r
+	if errorlevel 1 goto :eof
+)
+
+where /q make
+if errorlevel 1 (
+	echo Installing make ...
+	choco install make -y -r
+	if errorlevel 1 goto :eof
+)
+
+set msvc=y
+set vc=
+set "vswhere=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+if exist "%vswhere%" for /f "tokens=*" %%i in ('"%vswhere%" -latest -find VC') do set "vc=%%i"
+if "%msvc%%vc%"=="y" (
+	echo Installing Visual Studio ...
+	choco install visualstudio2019community -y -r
+	if errorlevel 1 goto :eof
+	choco install visualstudio2019-workload-nativedesktop -y -r
 	if errorlevel 1 goto :eof
 )
 
@@ -30,27 +56,4 @@ if errorlevel 1 (
 	echo Installing MSYS2 ...
 	choco install msys2 -y -r
 	if errorlevel 1 goto :eof
-)
-
-set MSYS2=call msys2_shell -no-start -here -use-full-path -defterm
-
-set ver=
-( for /f "tokens=*" %%f in ('%MSYS2% -c "make --version 2>/dev/null"') do (set ver=%%f) ) 2>nul:
-if "%ver%"=="" (
-	echo Installing make ...
-	%MSYS2% -c "pacman --noconfirm -Syy msys/make"
-)
-
-set ver=
-( for /f "tokens=*" %%f in ('%MSYS2% -c "cmp --version 2>/dev/null"') do (set ver=%%f) ) 2>nul:
-if "%ver%"=="" (
-	echo Installing diffutils ...
-	%MSYS2% -c "pacman --noconfirm -Syy msys/diffutils"
-)
-
-set ver=
-( for /f "tokens=*" %%f in ('%MSYS2% -c "autoconf --version 2>/dev/null"') do (set ver=%%f) ) 2>nul:
-if "%ver%"=="" (
-	echo Installing autoconf ...
-	%MSYS2% -c "pacman --noconfirm -Syy msys/autoconf"
 )

@@ -1,0 +1,102 @@
+name: windows-build-test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - dev
+    tags:
+      - v*
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  #
+  # Produce a "full" source-archive, that is, including source from submodules
+  #
+  # This is done to provide the source-archive for users in environments without
+  # submodule access and for the containers in the workflow which does not have
+  # a recent enough version of git do pull down the modules
+  #
+  source-archive-gen:
+    runs-on: windows-2019
+
+    steps:
+    - name: Grab source
+      uses: actions/checkout@v2
+
+    - name: Prepare Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Generate Full Source Archive
+      run: |
+        pip install git-archive-all
+        make gen-src-archive
+
+
+    - name: Upload source archive
+      uses: actions/upload-artifact@v2
+      with:
+        name: archive-src
+        path: build/*.src.tar.gz
+
+  # Build the source-archive on Windows
+  windows-build:
+    runs-on: ${{ matrix.runner.os }}-${{ matrix.runner.ver }}
+    needs: source-archive-gen
+
+    strategy:
+      matrix:
+        runner:
+          - { os: 'windows', ver: '2019' }
+
+    steps:
+    - name: Image-prep, get the full-source-archive
+      uses: actions/download-artifact@v2
+      with:
+        name: archive-src
+
+    - name: Unpack the full-source-archive
+      run: |
+        ls
+        7z x *.src.tar.gz -so | 7z x -ttar -si -aoa
+        rm *.src.tar.gz
+        mv xnvme-* xnvme
+
+    - name: Install build-requirements
+      run: |
+        cd xnvme
+        cmd.exe /c "echo %cd%"
+        cmd.exe /c "scripts\pkgs\${{ matrix.runner.os }}-${{ matrix.runner.ver }}.bat"
+
+        # TODO: not sure if this is needed
+        [[ ! -f "/usr/bin/python" ]] && ln -s /usr/bin/python3.8 /usr/bin/python || true
+
+    - name: Build!
+      run: |
+        cd xnvme
+        cmd.exe /c "build.bat"
+
+    - name: Dump the compile-commands and machine
+      run: |
+        cat /proc/cpuinfo
+        cat xnvme/build/compile_commands.json
+
+    - name: Install
+      run: |
+        cd xnvme
+
+        # TODO: we probably want to either move this file or inline the commands here
+        cmd.exe /c "install.bat"
+
+    - name: Execute xnvme commands
+      run: |
+        cd xnvme
+
+        # TODO: we probably want to either move this file or inline the commands here
+        cmd.exe /c "run.bat"

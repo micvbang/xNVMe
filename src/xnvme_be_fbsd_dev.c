@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <paths.h>
 #include <libxnvme_ident.h>
 #include <libxnvme_file.h>
 #include <libxnvme_spec_fs.h>

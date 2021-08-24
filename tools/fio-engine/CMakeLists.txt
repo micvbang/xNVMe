@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-set(TOOLS_FIOE true CACHE BOOL "tools: xNVMe fio IO-engine")
+set(TOOLS_FIOE ${UNIX} CACHE BOOL "tools: xNVMe fio IO-engine")
 if(NOT TOOLS_FIOE)
 	return()
 endif()

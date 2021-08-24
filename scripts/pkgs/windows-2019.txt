@@ -1,0 +1,9 @@
+# packages list
+msys2
+llvm
+make
+Windows SDK 10
+
+# Run Windows command-prompt as Administrator
+> cd scripts\pkgs
+> windows-2019.bat

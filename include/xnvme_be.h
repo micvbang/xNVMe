@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #ifndef __INTERNAL_XNVME_BE_H
 #define __INTERNAL_XNVME_BE_H
-#include <paths.h>
 #include <libxnvme_pp.h>
 #include <xnvme.h>
 #include <xnvme_be_registry.h>
